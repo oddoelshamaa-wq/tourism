@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة إدارة رويال ترافيل | استقبال الحجوزات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root { --gold: #d4af37; --dark: #020617; --card: #1e293b; --accent: #38bdf8; --danger: #ef4444; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--dark); color: white; }
+
+        header { padding: 20px 0; border-bottom: 2px solid var(--gold); background: #0f172a; }
+        .container { width: 95%; max-width: 1200px; margin: auto; }
+        .nav { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: 900; color: var(--gold); text-decoration: none; }
+
+        /* قسم الإحصائيات */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+        .stat-card { background: var(--card); padding: 20px; border-radius: 15px; border-right: 5px solid var(--gold); text-align: center; }
+        .stat-card h3 { font-size: 0.9rem; color: #94a3b8; }
+        .stat-card p { font-size: 1.8rem; font-weight: 900; color: var(--gold); }
+
+        /* الجدول */
+        .table-container { margin-top: 40px; background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #334155; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        thead { background: #334155; color: var(--gold); }
+        th, td { padding: 15px 20px; border-bottom: 1px solid #334155; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+
+        .btn-delete { background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .btn-delete:hover { opacity: 0.8; }
+
+        .status-badge { background: #064e3b; color: #34d399; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; }
+
+        /* ستارة التحميل */
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--dark); display:flex; justify-content:center; align-items:center; z-index:9999; }
+        .loader-hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><h2 style="color:var(--gold)">جاري جلب الحجوزات...</h2></div>
+
+    <header>
+        <div class="container nav">
+            <a href="#" class="logo"><i class="fas fa-chart-line"></i> لوحة تحكم الحجوزات</a>
+            <a href="index.html" style="color:white; text-decoration:none;">العودة للموقع <i class="fas fa-external-link-alt"></i></a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- الإحصائيات -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>إجمالي الحجوزات</h3>
+                <p id="totalBookings">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>إجمالي الإيرادات</h3>
+                <p id="totalRevenue">0 ج.م</p>
+            </div>
+        </div>
+
+        <!-- جدول الحجوزات -->
+        <div class="table-container">
+            <table>
+                <thead>
+    <tr>
+        <th>العميل</th>
+<th>الفندق</th>
+<th>فترة الإقامة</th> <!-- العمود الجديد -->
+<th>المبلغ</th>
+<th>طريقة الدفع</th>
+<th>إجراء</th>
+        
+    </tr>
+</thead>
+                <tbody id="bookingsTable">
+                    <!-- سيتم إضافة البيانات هنا بواسطة JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // نفس بيانات الاتصال الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2a6BpAGJMEtVBYPxQDIx-F6Z3qFLrBdQ",
+            authDomain: "tourism-86a52.firebaseapp.com",
+            projectId: "tourism-86a52",
+            storageBucket: "tourism-86a52.firebasestorage.app",
+            messagingSenderId: "227487436933",
+            appId: "1:227487436933:web:44674ea483098e65c619ec"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadBookings() {
+            const tableBody = document.getElementById('bookingsTable');
+            const snapshot = await getDocs(collection(db, "bookings"));
+            
+            let totalB = 0;
+            let totalR = 0;
+            tableBody.innerHTML = "";
+
+            snapshot.forEach((booking) => {
+                const data = booking.data();
+                const id = booking.id;
+                
+                // حساب الإحصائيات
+                totalB++;
+                const price = parseInt(data.total.replace(/[^0-9]/g, '')) || 0;
+                totalR += price;
+
+        tableBody.innerHTML += `
+    <tr>
+        <td><strong>${data.user}</strong></td>
+        <td>${data.hotel}</td>
+        <td>
+            <div style="font-size: 0.85rem; line-height: 1.4;">
+                <span style="color:#94a3b8">من:</span> ${data.checkIn} <br>
+                <span style="color:#94a3b8">إلى:</span> ${data.checkOut}
+            </div>
+        </td>
+        <td style="color:var(--gold)">${data.total}</td>
+        <td>
+            <span style="color:var(--accent); font-size: 0.9rem;">
+                <i class="${data.method === 'بطاقة بنكية' ? 'fas fa-credit-card' : 'fas fa-mobile-alt'}"></i> 
+                ${data.method || 'غير محدد'}
+            </span>
+        </td>
+        <td>
+            <button class="btn-delete" onclick="deleteBooking('${id}')">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+`;
+            });
+
+            document.getElementById('totalBookings').innerText = totalB;
+            document.getElementById('totalRevenue').innerText = totalR.toLocaleString() + " ج.م";
+            document.getElementById('loader').classList.add('loader-hidden');
+        }
+
+        // دالة حذف حجز
+        window.deleteBooking = async (id) => {
+            if(confirm("هل أنت متأكد من حذف هذا الحجز؟")) {
+                await deleteDoc(doc(db, "bookings", id));
+                location.reload();
+            }
+        };
+
+        window.onload = loadBookings;
+    </script>
+</body>
+</html> 
