@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة التحكم | إدارة الأسعار والوصف</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root { --gold: #d4af37; --dark: #020617; --sidebar: #0f172a; --card: #1e293b; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--dark); color: white; display: flex; }
+
+        aside { width: 280px; background: var(--sidebar); height: 100vh; padding: 30px; position: fixed; border-left: 1px solid #1e293b; }
+        main { margin-right: 280px; padding: 40px; width: 100%; }
+
+        .nav-item { padding: 15px; margin-bottom: 10px; border-radius: 10px; cursor: pointer; transition: 0.3s; color: #94a3b8; }
+        .nav-item:hover, .nav-item.active { background: var(--gold); color: black; font-weight: bold; }
+
+        .card { background: var(--card); padding: 25px; border-radius: 20px; margin-bottom: 30px; border: 1px solid #334155; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; background: #0f172a; border: 1px solid #334155; color: white; outline: none; }
+        
+        button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-save { background: var(--gold); color: black; width: 100%; font-size: 1.1rem; }
+        .btn-update { background: #38bdf8; color: white; }
+        .btn-del { background: #ef4444; color: white; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: var(--gold); background: #0f172a; }
+
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        /* تصميم خانات التعديل داخل الجدول */
+        .edit-input { background: #020617; border: 1px solid var(--gold); color: white; padding: 5px; border-radius: 5px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <h2 style="color:var(--gold); margin-bottom:40px; text-align:center;">ROYAL ADMIN</h2>
+        <div class="nav-item active" onclick="showS('hotelsSec')"><i class="fas fa-hotel"></i> إدارة الفنادق</div>
+        <div class="nav-item" onclick="showS('regionsSec')"><i class="fas fa-map"></i> المناطق</div>
+        <a href="index.html" style="display:block; margin-top:50px; color:var(--gold); text-decoration:none;"><i class="fas fa-home"></i> معاينة الموقع</a>
+    </aside>
+
+    <main>
+        <section id="hotelsSec" class="section active">
+            <div class="card">
+                <h3>إضافة فندق / عرض جديد</h3>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                    <input type="text" id="hName" placeholder="اسم الفندق">
+                    <input type="number" id="hPrice" placeholder="سعر الليلة">
+                </div>
+                <select id="hCity"><option value="">اختر المنطقة</option></select>
+                <textarea id="hImgs" rows="3" placeholder="روابط الصور (رابط واحد في كل سطر)"></textarea>
+                <textarea id="hDesc" placeholder="وصف الفندق..."></textarea>
+                <label><input type="checkbox" id="hOffer"> تمييز كـ "عرض خاص" 🔥</label>
+                <button class="btn-save" onclick="addHotel()">نشر الفندق</button>
+            </div>
+
+            <div class="card">
+                <h3>تعديل بيانات الفنادق (السعر والوصف)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">الفندق</th>
+                            <th style="width: 10%;">السعر</th>
+                            <th style="width: 45%;">الوصف (تعديل مباشر)</th>
+                            <th style="width: 20%;">إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hotTable"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="regionsSec" class="section">
+            <div class="card">
+                <h3>إضافة منطقة</h3>
+                <input type="text" id="gNameInp" placeholder="اسم المحافظة">
+                <button class="btn-save" onclick="addGov()">إضافة</button>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2a6BpAGJMEtVBYPxQDIx-F6Z3qFLrBdQ",
+            authDomain: "tourism-86a52.firebaseapp.com",
+            projectId: "tourism-86a52",
+            storageBucket: "tourism-86a52.firebasestorage.app",
+            messagingSenderId: "227487436933",
+            appId: "1:227487436933:web:44674ea483098e65c619ec",
+            measurementId: "G-X4HXH0CJGY"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.showS = (id) => {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+        };
+
+        const load = async () => {
+            // تحميل المناطق
+            const gS = await getDocs(collection(db, "governorates"));
+            document.getElementById('hCity').innerHTML = '<option value="">اختر المنطقة</option>';
+            gS.forEach(d => document.getElementById('hCity').innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+
+            // تحميل الفنادق في الجدول
+            const hS = await getDocs(collection(db, "hotels"));
+            const tbody = document.getElementById('hotTable');
+            tbody.innerHTML = "";
+            hS.forEach(d => {
+                const h = d.data();
+                tbody.innerHTML += `
+                <tr>
+                    <td>${h.name} ${h.isOffer ? '🔥' : ''}</td>
+                    <td><input type="number" id="p-${d.id}" value="${h.price}" class="edit-input"></td>
+                    <td><textarea id="d-${d.id}" class="edit-input" style="height:60px;">${h.desc || ''}</textarea></td>
+                    <td>
+                        <button class="btn-update" onclick="window.updateHotel('${d.id}')">تحديث</button>
+                        <button class="btn-del" onclick="window.delHot('${d.id}')">حذف</button>
+                    </td>
+                </tr>`;
+            });
+        };
+
+        window.addHotel = async () => {
+            const imgs = document.getElementById('hImgs').value.split('\n').filter(i => i.trim() !== "");
+            const h = {
+                name: document.getElementById('hName').value,
+                price: Number(document.getElementById('hPrice').value),
+                city: document.getElementById('hCity').value,
+                images: imgs,
+                desc: document.getElementById('hDesc').value,
+                isOffer: document.getElementById('hOffer').checked
+            };
+            await addDoc(collection(db, "hotels"), h);
+            alert("تم النشر بنجاح!");
+            load();
+        };
+
+        window.addGov = async () => {
+            const name = document.getElementById('gNameInp').value;
+            await addDoc(collection(db, "governorates"), { name });
+            alert("تمت إضافة المنطقة");
+            load();
+        };
+
+        // تحديث السعر والوصف معاً
+        window.updateHotel = async (id) => {
+            const newP = Number(document.getElementById('p-' + id).value);
+            const newD = document.getElementById('d-' + id).value;
+            const hotelRef = doc(db, "hotels", id);
+            
+            await updateDoc(hotelRef, { 
+                price: newP,
+                desc: newD
+            });
+            
+            alert("تم تحديث بيانات الفندق بنجاح!");
+            load();
+        };
+
+        window.delHot = async (id) => {
+            if(confirm("حذف الفندق؟")) {
+                await deleteDoc(doc(db, "hotels", id));
+                load();
+            }
+        };
+
+        window.onload = load;
+    </script>
+</body>
+</html>
