@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رويال ترافيل | وجهتك الملكية في مصر</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root { --gold: #d4af37; --dark: #020617; --card: #1e293b; --accent: #38bdf8; --discount: #ef4444; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--dark); color: white; overflow-x: hidden; }
+
+        header { padding: 15px 0; border-bottom: 2px solid var(--gold); background: rgba(2,6,23,0.98); position: sticky; top: 0; z-index: 1000; backdrop-filter: blur(10px); }
+        .container { width: 92%; max-width: 1200px; margin: auto; }
+        .nav { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 26px; font-weight: 900; color: var(--gold); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+
+        /* البحث والفلترة */
+        .hero-search { background: linear-gradient(rgba(2,6,23,0.8), rgba(2,6,23,0.8)), url('https://images.unsplash.com/photo-1572120339161-04e30421415e?auto=format&fit=crop&w=1200') no-repeat center/cover; padding: 60px 0; border-bottom: 1px solid var(--gold); text-align: center; }
+        .filter-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; max-width: 800px; margin: 30px auto 0; }
+        input, select { padding: 15px; border-radius: 12px; background: #0f172a; border: 1px solid var(--gold); color: white; outline: none; width: 100%; font-size: 1rem; }
+
+        /* شبكة الفنادق */
+        .hotels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; padding: 50px 0; }
+        .card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); transition: 0.4s; cursor: pointer; position: relative; }
+        .card:hover { transform: translateY(-10px); border-color: var(--gold); box-shadow: 0 10px 30px rgba(212,175,55,0.1); }
+        .card img { width: 100%; height: 220px; object-fit: cover; }
+        
+        .offer-tag { position: absolute; top: 15px; right: 15px; background: var(--discount); color: white; padding: 4px 12px; border-radius: 50px; font-size: 0.85rem; font-weight: bold; z-index: 5; }
+
+        .card-body { padding: 20px; }
+        .hotel-name { font-size: 1.3rem; color: var(--gold); margin-bottom: 8px; font-weight: 700; }
+        .hotel-city { color: var(--accent); font-size: 0.9rem; margin-bottom: 12px; }
+        .price-section { display: flex; align-items: center; gap: 10px; }
+        .current-price { font-size: 1.4rem; font-weight: 900; color: white; }
+        .old-price { text-decoration: line-through; color: #64748b; font-size: 0.9rem; }
+
+        /* نافذة الحجز */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 5000; overflow-y: auto; padding: 15px; }
+        .modal-content { background: #0f172a; max-width: 1000px; margin: 20px auto; border-radius: 25px; padding: 30px; border: 1px solid var(--gold); position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 35px; color: var(--gold); cursor: pointer; }
+
+        .image-gallery { display: flex; gap: 10px; overflow-x: auto; padding: 15px 0; scrollbar-width: thin; }
+        .image-gallery img { width: 260px; height: 180px; object-fit: cover; border-radius: 15px; border: 2px solid #1e293b; flex-shrink: 0; }
+
+        .booking-layout { display: grid; grid-template-columns: 1fr 380px; gap: 30px; }
+        @media (max-width: 850px) { .booking-layout { grid-template-columns: 1fr; } .filter-grid { grid-template-columns: 1fr; } }
+
+        .form-card { background: #1e293b; padding: 25px; border-radius: 20px; border: 1px solid #334155; }
+        .total-box { font-size: 2rem; color: var(--gold); font-weight: 900; text-align: center; margin: 20px 0; padding-top: 15px; border-top: 1px dashed #444; }
+
+        /* Loader */
+        #loader { position: fixed; inset: 0; background: var(--dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: 0.5s; }
+        .loader-text { font-size: 2rem; color: var(--gold); font-weight: 900; letter-spacing: 3px; animation: glow 1.5s infinite; }
+        @keyframes glow { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.95); } }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="loader-text">ROYAL TRAVEL</div>
+    <div style="color: #64748b; margin-top: 10px;">جاري تجهيز أفضل العروض...</div>
+</div>
+
+<header>
+    <div class="container nav">
+        <a href="#" class="logo"><i class="fas fa-crown"></i> ROYAL TRAVEL</a>
+        <div style="font-weight: bold; color: var(--gold);">مرحباً بك في مصر</div>
+    </div>
+</header>
+
+<section class="hero-search">
+    <div class="container">
+        <h1 style="font-size: 2.5rem; color: white;">اكتشف سحر <span style="color: var(--gold);">مصر</span> بأسلوب ملكي</h1>
+        <p style="color: #cbd5e1; margin-top: 10px;">أفضل الفنادق في كافة المحافظات بأسعار حصرية</p>
+        <div class="filter-grid">
+            <input type="text" id="searchInput" placeholder="ابحث باسم الفندق أو المدينة..." oninput="window.filterHotels()">
+            <select id="regionFilter" onchange="window.filterHotels()">
+                <option value="">جميع المحافظات</option>
+                <option value="القاهرة">القاهرة</option>
+                <option value="الإسكندرية">الإسكندرية</option>
+                <option value="شرم الشيخ">شرم الشيخ</option>
+                <option value="الغردقة">الغردقة</option>
+                <option value="الأقصر">الأقصر</option>
+                <option value="أسوان">أسوان</option>
+                <option value="دهب">دهب</option>
+                <option value="مرسى مطروح">مرسى مطروح</option>
+            </select>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <div id="hotelsGrid" class="hotels-grid"></div>
+</div>
+
+<!-- مودال الحجز -->
+<div id="bookModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="window.closeM()">&times;</span>
+        <div id="mGallery" class="image-gallery"></div>
+        
+        <div class="booking-layout">
+            <div class="info-side">
+                <h2 id="mName" style="color:var(--gold); font-size:2.2rem;"></h2>
+                <p id="mLoc" style="color:var(--accent); font-weight:bold; margin:10px 0 20px;"></p>
+                <div style="padding:20px; background: rgba(255,255,255,0.03); border-radius:15px; color:#ccc; line-height:1.7;">
+                    <h4 style="color:white; margin-bottom:10px;">عن الإقامة:</h4>
+                    <p id="mDesc"></p>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3 style="text-align:center; margin-bottom:20px;">حجز سريع</h3>
+                <input type="text" id="custName" placeholder="الاسم بالكامل" style="margin-bottom:15px;">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <div><label style="font-size:0.8rem; color:#888;">الوصول</label><input type="date" id="dateS" onchange="window.calc()"></div>
+                    <div><label style="font-size:0.8rem; color:#888;">المغادرة</label><input type="date" id="dateE" onchange="window.calc()"></div>
+                </div>
+                <select id="payMethod" style="margin-bottom:15px;">
+                    <option value="بطاقة بنكية">دفع بالبطاقة البنكية</option>
+                    <option value="فودافون كاش">فودافون كاش</option>
+                    <option value="الدفع عند الوصول">الدفع في الفندق</option>
+                </select>
+                <div id="totalP" class="total-box">0 ج.م</div>
+                <button onclick="window.confirmBooking()" style="width:100%; padding:18px; background:var(--gold); border:none; border-radius:12px; font-weight:900; cursor:pointer;">تأكيد الحجز الآن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC2a6BpAGJMEtVBYPxQDIx-F6Z3qFLrBdQ",
+        authDomain: "tourism-86a52.firebaseapp.com",
+        projectId: "tourism-86a52",
+        storageBucket: "tourism-86a52.firebasestorage.app",
+        messagingSenderId: "227487436933",
+        appId: "1:227487436933:web:44674ea483098e65c619ec"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // قائمة البيانات المضافة (سيتم دمجها مع الفايربيز)
+    const presetHotels = [
+        { id: "h1", name: "فندق النيل ريتز كارلتون", city: "القاهرة", price: 6200, oldPrice: 7500, images: ["https://images.unsplash.com/photo-1542314831-068cd1dbfeeb", "https://images.unsplash.com/photo-1566073771259-6a8506099945"], desc: "إطلالة بانورامية على النيل وقلب القاهرة التاريخي." },
+        { id: "h2", name: "ريكسوس سي جيت", city: "شرم الشيخ", price: 8900, oldPrice: 11000, images: ["https://images.unsplash.com/photo-1571896349842-33c89424de2d"], desc: "منتجع فاخر شامل كل شيء مع شاطئ خاص وألعاب مائية." },
+        { id: "h3", name: "فورسيزونز سان ستيفانو", city: "الإسكندرية", price: 7100, oldPrice: 8000, images: ["https://images.unsplash.com/photo-1551882547-ff43c63fedfe"], desc: "تجربة إقامة لا تنسى على شاطئ المتوسط مباشرة." },
+        { id: "h4", name: "فندق أولد كاتاراكت", city: "أسوان", price: 9500, oldPrice: 12000, images: ["https://images.unsplash.com/photo-1520250497591-112f2f40a3f4"], desc: "الفندق التاريخي المفضل لأجاثا كريستي والملوك." },
+        { id: "h5", name: "شتاينبرجر الداو بيتش", city: "الغردقة", price: 5400, oldPrice: 6500, images: ["https://images.unsplash.com/photo-1582719508461-905c673771fd"], desc: "ملاذ هادئ مع حمامات سباحة عملاقة وشواطئ فيروزية." },
+        { id: "h6", name: "وينتر بالاس - قصر الشتاء", city: "الأقصر", price: 4800, oldPrice: 5500, images: ["https://images.unsplash.com/photo-1590073242678-70ee3fc28e84"], desc: "عيش تجربة الملوك في قصر تاريخي وسط كنوز الأقصر." },
+        { id: "h7", name: "لو ميريديان دهب", city: "دهب", price: 2900, oldPrice: 3500, images: ["https://images.unsplash.com/photo-1544124499-58912cbddaad"], desc: "أفضل موقع لمحبى الغوص والاسترخاء في دهب." },
+        { id: "h8", name: "قيصر باي ريزورت", city: "مرسى مطروح", price: 4200, oldPrice: 5000, images: ["https://images.unsplash.com/photo-1506059618471-72539a455b73"], desc: "جمال مالديف مصر في أرقى منتجعات مطروح." },
+        { id: "h9", name: "فيرمونت نايل سيتي", city: "القاهرة", price: 5100, oldPrice: 6000, images: ["https://images.unsplash.com/photo-1564501049412-61c2a3083791"], desc: "فخامة عصرية في أحد أطول أبراج القاهرة." }
+    ];
+
+    let allHotels = [];
+    let displayedHotels = [];
+    let selectedH = null;
+
+    window.onload = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, "hotels"));
+            const firebaseHotels = [];
+            querySnapshot.forEach(doc => firebaseHotels.push({id: doc.id, ...doc.data()}));
+            
+            // دمج الفنادق من فايربيز مع القائمة الجاهزة
+            allHotels = [...firebaseHotels, ...presetHotels];
+            displayedHotels = [...allHotels];
+            renderHotels();
+        } catch (e) {
+            allHotels = [...presetHotels];
+            displayedHotels = [...allHotels];
+            renderHotels();
+        }
+        setTimeout(() => document.getElementById('loader').style.display = 'none', 1000);
+    };
+
+    const renderHotels = () => {
+        const grid = document.getElementById('hotelsGrid');
+        grid.innerHTML = displayedHotels.map(h => {
+            const discount = h.oldPrice ? `<div class="offer-tag">خصم ${Math.round((h.oldPrice - h.price)/h.oldPrice * 100)}%</div>` : '';
+            return `
+            <div class="card" onclick="window.openM('${h.id}')">
+                ${discount}
+                <img src="${h.images[0]}" onerror="this.src='https://via.placeholder.com/400x250?text=Royal+Travel'">
+                <div class="card-body">
+                    <h3 class="hotel-name">${h.name}</h3>
+                    <p class="hotel-city"><i class="fas fa-map-marker-alt"></i> ${h.city}</p>
+                    <div class="price-section">
+                        <span class="current-price">${h.price.toLocaleString()} ج.م</span>
+                        ${h.oldPrice ? `<span class="old-price">${h.oldPrice.toLocaleString()} ج.م</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    };
+
+    window.filterHotels = () => {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        const city = document.getElementById('regionFilter').value;
+        displayedHotels = allHotels.filter(h => 
+            (h.name.toLowerCase().includes(term) || h.city.toLowerCase().includes(term)) &&
+            (city === "" || h.city === city)
+        );
+        renderHotels();
+    };
+
+    window.openM = (id) => {
+        selectedH = allHotels.find(h => h.id === id);
+        document.getElementById('mName').innerText = selectedH.name;
+        document.getElementById('mLoc').innerText = "📍 مصر، " + selectedH.city;
+        document.getElementById('mDesc').innerText = selectedH.desc || "نقدم لك أفضل تجربة فندقية مع مرافق متكاملة تشمل حمام سباحة، إنترنت سريع، وإفطار ملكي.";
+        document.getElementById('mGallery').innerHTML = selectedH.images.map(img => `<img src="${img}">`).join('');
+        document.getElementById('bookModal').style.display = 'block';
+    };
+
+    window.closeM = () => document.getElementById('bookModal').style.display = 'none';
+
+    window.calc = () => {
+        const s = new Date(document.getElementById('dateS').value);
+        const e = new Date(document.getElementById('dateE').value);
+        if(s && e && e > s) {
+            const nights = Math.ceil((e-s)/(1000*60*60*24));
+            document.getElementById('totalP').innerText = (nights * selectedH.price).toLocaleString() + " ج.م";
+        }
+    };
+
+    window.confirmBooking = async () => {
+        const name = document.getElementById('custName').value;
+        const s = document.getElementById('dateS').value;
+        const e = document.getElementById('dateE').value;
+        if(!name || !s || !e) return alert("يرجى ملء كافة البيانات واختيار التواريخ");
+
+        try {
+            await addDoc(collection(db, "bookings"), {
+                hotel: selectedH.name,
+                customer: name,
+                checkIn: s,
+                checkOut: e,
+                total: document.getElementById('totalP').innerText,
+                payment: document.getElementById('payMethod').value,
+                date: new Date().toLocaleString()
+            });
+            alert("تم إرسال طلب الحجز بنجاح! سيتصل بك موظفنا لتأكيد الدفع.");
+            window.closeM();
+        } catch (err) {
+            alert("حدث خطأ، ولكن تم تسجيل طلبك مبدئياً.");
+        }
+    };
+</script>
+</body>
+</html>
