@@ -103,7 +103,6 @@
     <header>
         <div class="container nav">
             <a href="index.html" class="logo">ROYAL TRAVEL</a>
-            <a href="admin.html" style="color:var(--gold); text-decoration:none;"><i class="fas fa-user-shield"></i> لوحة الإدارة</a>
         </div>
     </header>
 
@@ -254,13 +253,30 @@
             }
         };
 
-        window.confirmBooking = async () => {
-            const name = document.getElementById('custName').value;
-            if(!name || document.getElementById('totalP').innerText === "0 ج.م") return alert("اكمل البيانات");
-            await addDoc(collection(db, "bookings"), { hotel: selectedH.name, user: name, total: document.getElementById('totalP').innerText, at: new Date().toLocaleString() });
-            alert("تم الحجز بنجاح!");
-            location.reload();
-        };
+       window.confirmBooking = async () => {
+    const name = document.getElementById('custName').value;
+    const dateS = document.getElementById('dateS').value; // تاريخ الوصول
+    const dateE = document.getElementById('dateE').value; // تاريخ المغادرة
+    const paymentMethod = document.getElementById('payBank').checked ? "بطاقة بنكية" : "محفظة كاش";
+
+    // التأكد من إدخال جميع البيانات
+    if(!name || !dateS || !dateE || document.getElementById('totalP').innerText === "0 ج.م") {
+        return alert("يرجى إكمال جميع البيانات واختيار التواريخ");
+    }
+
+    await addDoc(collection(db, "bookings"), { 
+        hotel: selectedH.name, 
+        user: name, 
+        checkIn: dateS,  // حفظ تاريخ الوصول
+        checkOut: dateE, // حفظ تاريخ المغادرة
+        total: document.getElementById('totalP').innerText, 
+        method: paymentMethod,
+        at: new Date().toLocaleString() 
+    });
+
+    alert("تم الحجز بنجاح!");
+    location.reload();
+};
     </script>
 </body>
 </html>
